@@ -1,4 +1,6 @@
 """Chinese desktop UI. No game files are modified."""
+import os,math
+from winmem import processes
 import ctypes as C,ctypes.wintypes as W,threading,queue,time,json,sys,traceback
 from pathlib import Path
 import tkinter as tk
@@ -7,7 +9,7 @@ from engine import Trainer,FEATURES
 
 class App:
  def __init__(self,root):
-  self.root=root;self.t=Trainer();self.jobs=queue.Queue();self.events=queue.Queue();self.connected=False;self.pid=0;self.closing=False;self.polling=False
+  self.root=root;self.t=Trainer();self.jobs=queue.Queue();self.events=queue.Queue();self.connected=False;self.pid=0;self.closing=False;self.polling=False;self.connecting=False
   self.user=C.WinDLL('user32');self.user.GetForegroundWindow.restype=W.HWND
   self.user.GetWindowThreadProcessId.argtypes=[W.HWND,C.POINTER(W.DWORD)]
   self.user.SetForegroundWindow.argtypes=[W.HWND]
@@ -32,7 +34,7 @@ class App:
   ttk.Label(top,text='尤里的复仇',font=('Microsoft YaHei UI',22,'bold')).pack(anchor='w')
   ttk.Label(top,text='CnCNet 9.3.3  ·  Ares 3.0p1  ·  Phobos 0.4.0.2',foreground='#9faebd').pack(anchor='w',pady=(2,10))
   bar=ttk.Frame(top);bar.pack(fill='x')
-  self.connect_btn=ttk.Button(bar,text='连接游戏',command=self.connect);self.connect_btn.pack(side='left')
+  self.connect_btn=ttk.Button(bar,text='连接游戏  小键盘*',command=self.connect);self.connect_btn.pack(side='left')
   ttk.Button(bar,text='关闭全部功能',command=self.disable_all).pack(side='left',padx=8)
   self.topmost=tk.BooleanVar(value=False);ttk.Checkbutton(bar,text='窗口置顶',variable=self.topmost,command=lambda:root.attributes('-topmost',self.topmost.get())).pack(side='right')
   root.attributes('-topmost',False)
@@ -57,8 +59,13 @@ class App:
   ttk.Button(build,text='地图全开  小键盘6',command=lambda:self.unit(10,'地图全开')).grid(row=0,column=3,padx=5)
   ttk.Checkbutton(build,text='我方超武无冷却',variable=self.vars['super'],command=lambda:self.toggle('super')).grid(row=1,column=0,columnspan=2,sticky='w')
   ttk.Button(build,text='我方超武立即就绪  小键盘+',command=lambda:self.unit(11,'我方超武立即就绪')).grid(row=1,column=2,columnspan=2,pady=4)
-  ttk.Checkbutton(build,text='单位快速生产（约1秒）',variable=self.vars['units'],command=lambda:self.toggle('units')).grid(row=2,column=0,columnspan=2,sticky='w')
-  ttk.Label(build,text='54游戏帧；出厂堵塞仍需等待。',foreground='#9faebd').grid(row=2,column=2,columnspan=2,sticky='w')
+  ttk.Checkbutton(build,text='单位快速生产',variable=self.vars['units'],command=lambda:self.toggle('units')).grid(row=2,column=0,columnspan=2,sticky='w')
+  self.unit_seconds=tk.StringVar(value='1')
+  timing=ttk.Frame(build);timing.grid(row=2,column=2,columnspan=2,sticky='w')
+  ttk.Entry(timing,textvariable=self.unit_seconds,width=6).pack(side='left')
+  ttk.Label(timing,text='秒').pack(side='left',padx=4)
+  ttk.Button(timing,text='应用',command=lambda:self.toggle('units')).pack(side='left')
+  ttk.Label(build,text='1～120秒，按60游戏帧/秒换算；低速对局及出厂等待会延长。',foreground='#9faebd').grid(row=3,column=0,columnspan=4,sticky='w')
   units=ttk.LabelFrame(body,text='所选单位',padding=10);units.pack(fill='both',expand=True,pady=6)
   buttons=ttk.Frame(units);buttons.pack(fill='x')
   for text,cmd in [('恢复生命',3),('加入无敌',4),('移除无敌',5),('单位归我',6),('清空保护',7)]:
@@ -68,7 +75,7 @@ class App:
   for key,text,width in [('type','单位',130),('hp','生命',130),('owner','归属',95),('protect','保护',95)]:
    self.tree.heading(key,text=text);self.tree.column(key,width=width,anchor='center')
   self.tree.pack(fill='both',expand=True)
-  ttk.Label(body,text='小键盘（Num Lock 开）：1 加钱 · 2 供电 · 3 回血 · 4 无敌 · 5 归我\n6 地图 · 7 建筑瞬建 · 8 全科技 · 9 远建 · 0 清空保护\n− 单位快产 · + 超武就绪 · 小数点 超武无冷却',foreground='#9faebd').pack(anchor='w',pady=(8,4))
+  ttk.Label(body,text='小键盘（Num Lock 开）：1 加钱 · 2 供电 · 3 回血 · 4 无敌 · 5 归我\n6 地图 · 7 建筑瞬建 · 8 全科技 · 9 远建 · 0 清空保护\n* 连接/断开 · − 单位快产 · + 超武就绪 · 小数点 超武无冷却',foreground='#9faebd').pack(anchor='w',pady=(8,4))
   self.status=tk.StringVar(value='未连接');ttk.Label(root,textvariable=self.status,wraplength=round(625*scale),foreground='#f1d49a',padding=(20,8)).pack(fill='x')
   threading.Thread(target=self.worker,daemon=True).start();root.after(100,self.pump);root.after(600,self.poll)
  def worker(self):
@@ -82,6 +89,8 @@ class App:
   if not self.connected:self.status.set('请先连接已进入地图的游戏。');return
   self.status.set(name+'…');self.submit(name,fn)
  def connect(self):
+  if self.connecting or self.closing:return
+  self.connecting=True
   if self.connected:self.submit('disconnect',self.t.detach)
   else:self.status.set('正在核对游戏版本…');self.submit('connect',self.t.attach)
  def unit(self,cmd,name):self.action(name,lambda:self.t.command(cmd))
@@ -94,7 +103,10 @@ class App:
   try:
    if key=='money':value=int(self.money.get())
    if key=='power':value=int(self.power.get())
-  except ValueError:self.status.set('请输入整数。');return
+   if key=='units':
+    value=float(self.unit_seconds.get())
+    if not math.isfinite(value) or not 1<=value<=120:raise ValueError('range')
+  except ValueError:self.status.set('单位生产时间请输入 1～120 秒（可填小数）。' if key=='units' else '请输入整数。');return
   self.action('更新功能',lambda:self.t.feature(key,enabled,value))
  def disable_all(self):
   def off():
@@ -110,13 +122,14 @@ class App:
    name,ok,result=self.events.get()
    if name=='close':self.root.destroy();return
    if name=='snapshot':self.polling=False
+   if name in ('connect','disconnect'):self.connecting=False
    if not ok:
     self.status.set(result)
     if name in ('snapshot','connect'):
-     self.connected=False;self.pid=0;self.connect_btn.configure(text='连接游戏');self.submit('cleanup',self.t.detach)
+     self.connected=False;self.pid=0;self.connect_btn.configure(text='连接游戏  小键盘*');self.submit('cleanup',self.t.detach)
     continue
-   if name=='connect':self.connected=True;self.pid=result['pid'];self.connect_btn.configure(text='断开并恢复');self.status.set('已连接；功能默认关闭。')
-   if name=='disconnect':self.connected=False;self.pid=0;self.connect_btn.configure(text='连接游戏');self.status.set('已恢复补丁并断开。')
+   if name=='connect':self.connected=True;self.pid=result['pid'];self.connect_btn.configure(text='断开并恢复  小键盘*');self.status.set('已连接；功能默认关闭。')
+   if name=='disconnect':self.connected=False;self.pid=0;self.connect_btn.configure(text='连接游戏  小键盘*');self.status.set('已恢复补丁并断开。')
    if name in ('snapshot','connect'):
     s=result;self.stats.set(f"金钱 {s['money']:,}    电力 {s['power']:,} / {s['drain']:,}    已保护 {s['protected']} 个")
     for key,mask in FEATURES.items():self.vars[key].set(bool(s['flags']&mask))
@@ -127,13 +140,16 @@ class App:
   if not self.closing:self.root.after(80,self.pump)
  def hotkeys(self):
   # Edge-triggered polling never activates a window or installs global key hooks.
-  down={vk for vk in [*range(0x60,0x6A),0x6B,0x6D,0x6E] if self.user.GetAsyncKeyState(vk)&0x8000}
+  down={vk for vk in [*range(0x60,0x6A),0x6A,0x6B,0x6D,0x6E] if self.user.GetAsyncKeyState(vk)&0x8000}
   pressed=down-self.hot_down;self.hot_down=down
-  if not self.connected or not pressed:return
+  if not pressed:return
   fg=self.user.GetForegroundWindow();p=W.DWORD();self.user.GetWindowThreadProcessId(fg,C.byref(p))
-  # Do not trigger actions while entering amounts in the trainer or typing in other apps.
-  if p.value!=self.pid:return
   if any(self.user.GetAsyncKeyState(vk)&0x8000 for vk in (0x10,0x11,0x12)):return
+  if 0x6A in pressed:
+   allowed=p.value in (self.pid,os.getpid()) or any(pid==p.value and name.lower()=='gamemd-spawn.exe' for pid,name in processes())
+   if allowed:self.connect()
+   return
+  if not self.connected or self.connecting or p.value!=self.pid:return
   for vk in sorted(pressed):
    key=vk-0x60
    if key==1:self.change_money(True)

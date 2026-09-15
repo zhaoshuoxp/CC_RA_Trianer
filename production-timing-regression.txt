@@ -1,0 +1,5 @@
+PASS: syntax, all seven bridge stubs assemble, relocation bounds, data isolation, conflict stops before allocation
+PASS: original factory instructions complete in 1 seconds at 60 FPS; AI/buildings unchanged
+PASS: original factory instructions complete in 2.5 seconds at 60 FPS; AI/buildings unchanged
+PASS: original factory instructions complete in 5 seconds at 60 FPS; AI/buildings unchanged
+PASS: original factory instructions complete in 120 seconds at 60 FPS; AI/buildings unchanged

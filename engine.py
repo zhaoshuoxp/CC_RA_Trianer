@@ -1,5 +1,5 @@
 """Local single-player Yuri's Revenge trainer. All engine calls execute in its game thread."""
-import json,hashlib,struct,time
+import json,hashlib,struct,time,math
 from pathlib import Path
 from winmem import Mem,processes,modules
 from keystone import Ks,KS_ARCH_X86,KS_MODE_32
@@ -8,7 +8,7 @@ ROOT=Path(__file__).resolve().parent
 PLAYER=0xA83D4C; FRAME=0xA8ED84; MODE=0xA8B238; SELECT=0xA8ECB8
 FLAGS=0x08; CMD=0x0C; ARG=0x10; ACK=0x14; RESULT=0x18; COUNT=0x1C
 MONEY=0x20; POWER=0x24; HEART=0x28; LASTFRAME=0x2C; LASTPLAYER=0x30
-TECHCOUNT=0x34; BUSY=0x38; GENERATION=0x3C; ENABLED=0x40
+TECHCOUNT=0x34; BUSY=0x38; GENERATION=0x3C; ENABLED=0x40; UNITFRAMES=0x44
 PROTECTED=0x100; SNAPSHOT=0x1100; TECHS=0x1600; LIMIT=256
 FEATURES={'money':1,'power':2,'buildings':4,'tech':8,'placement':16,'super':32,'units':64}
 ALLOWED=set('''GAPOWR GAREFN GAPILE GAWEAP GADEPT GATECH GAYARD GAAIRC AMRADR GAWALL GAPILL NASAM ATESLA GTGCAN GASPYSAT GAGAP GAOREP GACSPH GAWEAT
@@ -83,6 +83,7 @@ class Trainer:
   data=bytearray(0x2000);struct.pack_into('<I',data,0,0x59525431)
   struct.pack_into('<I',data,MONEY,100000);struct.pack_into('<I',data,POWER,100000)
   struct.pack_into('<I',data,ENABLED,1)
+  struct.pack_into('<I',data,UNITFRAMES,60)
   struct.pack_into('<I',data,TECHCOUNT,len(self.allowed))
   for i,p in enumerate(self.allowed):struct.pack_into('<I',data,TECHS+i*4,p)
   m.write(b,data)
@@ -169,7 +170,22 @@ test dword ptr [{f}],64
 jz next_factory
 cmp dword ptr [ecx+0x24],54
 jge next_factory
-mov dword ptr [ecx+0x34],0
+push ebx
+mov eax,dword ptr [ecx+0x24]
+inc eax
+imul eax,dword ptr [{at(UNITFRAMES)}]
+xor edx,edx
+mov ebx,54
+div ebx
+push eax
+mov eax,dword ptr [ecx+0x24]
+imul eax,dword ptr [{at(UNITFRAMES)}]
+xor edx,edx
+div ebx
+pop edx
+sub edx,eax
+mov dword ptr [ecx+0x34],edx
+pop ebx
 jmp next_factory
 building_factory:
 test dword ptr [{f}],4
@@ -522,7 +538,11 @@ mov dword ptr [{at(LASTPLAYER)}],0;inc dword ptr [{at(GENERATION)}];sub esp,{sta
  def feature(self,name,on,value=None):
   self.validate_session();m=self.mem;b=self.base;flag=FEATURES[name]
   if value is not None:
-   if not 0<=value<=10000000:raise ValueError('数值范围为 0～10000000')
+   if name=='units':
+    seconds=float(value)
+    if not math.isfinite(seconds) or not 1<=seconds<=120:raise ValueError('单位生产时间范围为 1～120 秒')
+    m.put32(b+UNITFRAMES,round(seconds*60))
+   elif not 0<=value<=10000000:raise ValueError('数值范围为 0～10000000')
    if name in ('money','power'):m.put32(b+(MONEY if name=='money' else POWER),value)
   bits=m.u32(b+FLAGS);m.put32(b+FLAGS,bits|flag if on else bits&~flag)
   if name=='power':self.command(8)
