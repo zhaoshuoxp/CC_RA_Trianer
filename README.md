@@ -11,7 +11,7 @@
 - [CnCNet/yrpp-spawner](https://github.com/CnCNet/yrpp-spawner)：参考 CnCNet 单人运行环境。
 - [Keystone Engine](https://github.com/keystone-engine/keystone)：生成运行时 x86 桥接指令。
 
-## 大致实现方法
+## 实现方法
 
 Python / Tkinter 提供中文界面，Win32 API 读取游戏进程并安装可恢复的内存补丁。连接前校验实际加载模块的 SHA-256 和单人游戏状态；引擎调用放在游戏主循环内执行。游戏文件不做修改。
 
