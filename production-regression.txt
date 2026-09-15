@@ -1,0 +1,4 @@
+PASS: syntax, all seven bridge stubs assemble, relocation bounds, data isolation, conflict stops before allocation
+PASS: actual EXE Factory::Update and IsDone: active +0x71=1 building finishes and pays; paused and AI untouched.
+PASS: vehicle, infantry, aircraft each complete in 54 real factory updates, never instantly; independent building switch; AI/paused/unknown untouched.
+PASS: ready object retained for native exit flow, next queued item restarts stepwise, disable restores normal timing, insufficient funds respected.

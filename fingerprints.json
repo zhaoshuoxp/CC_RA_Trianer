@@ -1,0 +1,38 @@
+[
+  {
+    "Name": "gamemd.exe",
+    "SHA256": "1CDD1180E49024FBDA8AD568CAAC2E86E856063FF67AB38F62B7D2C7BB84298C",
+    "Machine": "0x014C",
+    "ImageBase": "0x00400000"
+  },
+  {
+    "Name": "gamemd-spawn.exe",
+    "SHA256": "B29C47A94D6D414FAD3B53AB0F9EBCD0CE22F0A98CA2BE6F0C6920C4DD7E2FE2",
+    "Machine": "0x014C",
+    "ImageBase": "0x00400000"
+  },
+  {
+    "Name": "Ares.dll",
+    "SHA256": "4CBE28DF7F5E8EB4CB6383DB6209B8D4537AA98518EA9EE25A0F0408FFFCA93A",
+    "Machine": "0x014C",
+    "ImageBase": "0x10000000"
+  },
+  {
+    "Name": "Phobos.dll",
+    "SHA256": "7B8C37E1B82E2296E4DBABD2F00C7B53B9D52590E021684FAFADDAE32218FC85",
+    "Machine": "0x014C",
+    "ImageBase": "0x10000000"
+  },
+  {
+    "Name": "CnCNet-Spawner.dll",
+    "SHA256": "51A9B087C07EFBA4284699BCA5888C0E8B619E66AD7179B54C6EEA37A82711E6",
+    "Machine": "0x014C",
+    "ImageBase": "0x10000000"
+  },
+  {
+    "Name": "Syringe.exe",
+    "SHA256": "61309451E28D2FCA70A2542CD47917A03CB212AF880C569FD286C6B9BBC54200",
+    "Machine": "0x014C",
+    "ImageBase": "0x00400000"
+  }
+]

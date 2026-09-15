@@ -1,0 +1,3 @@
+PASS: syntax, all seven bridge stubs assemble, relocation bounds, data isolation, conflict stops before allocation
+Original SetCharge(100): remaining 1 ready 0
+PASS: original EXE confirms zero timer + CanFire; one-shot, persistent, half-ready repair, charge-drain transition; AI/suspended/absent/draining unchanged.
