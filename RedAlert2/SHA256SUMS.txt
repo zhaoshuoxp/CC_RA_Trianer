@@ -1,1 +1,1 @@
-3475506e7c6299f8cb24fd7028c9551ba31feafeb76f89a1c99908a6713593e8  YRTrainer-Portable.exe
+3475506e7c6299f8cb24fd7028c9551ba31feafeb76f89a1c99908a6713593e8  dist/YRTrainer-Portable.exe

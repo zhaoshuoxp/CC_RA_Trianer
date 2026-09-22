@@ -11,7 +11,7 @@ Windows 11 单人修改器项目，按游戏分为两个独立目录：
 
 ## 红色警戒2：尤里的复仇
 
-源码位于 [`RedAlert2`](RedAlert2)。进入单人地图后连接游戏，打开 Num Lock，热键只在游戏前台响应。
+源码和成品位于 [`RedAlert2`](RedAlert2)。可直接下载 [`YRTrainer-Portable.exe`](RedAlert2/dist/YRTrainer-Portable.exe)。进入单人地图后连接游戏，打开 Num Lock，热键只在游戏前台响应。
 
 | 小键盘 | 功能 |
 |---|---|
@@ -35,6 +35,8 @@ Windows 11 单人修改器项目，按游戏分为两个独立目录：
 - [AdjWang/RA2YurisRevengeTrainer](https://github.com/AdjWang/RA2YurisRevengeTrainer)
 - [Phobos-developers/YRpp](https://github.com/Phobos-developers/YRpp)
 - [CnCNet/yrpp-spawner](https://github.com/CnCNet/yrpp-spawner)
+
+当前红警2 EXE SHA-256：`3475506E7C6299F8CB24FD7028C9551BA31FEAFEB76F89A1C99908A6713593E8`。
 
 ## 红色警戒3与起义时刻
 

@@ -4,6 +4,7 @@
 **/.build-venv/
 **/build/
 **/*.spec
-RedAlert2/dist/
+RedAlert2/dist/*
+!RedAlert2/dist/YRTrainer-Portable.exe
 RedAlert3/dist/*
 !RedAlert3/dist/RA3Trainer-Portable.exe
