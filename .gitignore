@@ -8,3 +8,7 @@ RedAlert2/dist/*
 !RedAlert2/dist/YRTrainer-Portable.exe
 RedAlert3/dist/*
 !RedAlert3/dist/RA3Trainer-Portable.exe
+CommandConquer3/dist/*
+!CommandConquer3/dist/CNC3Trainer-Portable.exe
+CommandConquer3/tests/*.exe
+CommandConquer3/tools/*.exe

@@ -1,13 +1,14 @@
-# Red Alert Trainers
+# Command & Conquer Trainers
 
-Windows 11 单人修改器项目，按游戏分为两个独立目录：
+Windows 11 单人修改器项目，按游戏分为三个独立目录：
 
 | 目录 | 游戏 | 状态 |
 |---|---|---|
 | [`RedAlert2`](RedAlert2) | 红色警戒2《尤里的复仇》 | 支持已验证的 CnCNet / Ares / Phobos 版本 |
 | [`RedAlert3`](RedAlert3) | 红色警戒3原版与《起义时刻》 | 支持原版 1.13、起义时刻 1.01 |
+| [`CommandConquer3`](CommandConquer3) | 命令与征服3原版与《凯恩之怒》 | 支持原版 1.09/1.10、凯恩之怒 1.02/1.03 |
 
-两个修改器只用于单人战役或离线遭遇战。程序不会修改游戏文件；连接时会校验进程、游戏模块 SHA-256、映像基址、战局对象和补丁原始指令，正常退出时恢复本程序安装的指令。
+三个修改器只用于单人战役或离线遭遇战。程序不会修改游戏文件；连接时会校验进程、游戏模块 SHA-256、映像基址、战局对象和补丁原始指令，正常退出时恢复本程序安装的指令。
 
 ## 红色警戒2：尤里的复仇
 
@@ -70,9 +71,24 @@ Windows 11 单人修改器项目，按游戏分为两个独立目录：
 
 当前红警3 EXE SHA-256：`98F4EA39118D10D082947CEDB38F783B2B3E0A74BD67D2011D3C0DC33D178E5A`。
 
+## 命令与征服3与凯恩之怒
+
+源码和成品位于 [`CommandConquer3`](CommandConquer3)。可直接下载 [`CNC3Trainer-Portable.exe`](CommandConquer3/dist/CNC3Trainer-Portable.exe)，无需安装开发工具。
+
+支持的游戏模块：
+
+- 原版 1.09：`8EE145C5F6DF2A8C853E073D8F43294F09EC9669150AFDF3E9644C830A19D15A`
+- 原版 1.10：`AF568A89B6D0D4F69EC690CF1D443539CB15AFE197B96AC3FC5BF0EC0A56D141`
+- 凯恩之怒 1.02：`ED685B85CF2646FE79CEE57543A992B0165065F1FD2B59C31B1A200C6C7A0E9A`
+- 凯恩之怒 1.03：`1716C954AB80CF05752F4A4A467D34313A95A55A408718270F96382E330572F3`
+
+功能包括设置或保持最低资金、无限电力、我方单位与建筑无敌、剧情初始单位保护、护盾不减、快速生产，以及《凯恩之怒》全球征服资金。热键只在游戏窗口位于前台时响应，读档或进入新地图会自动关闭功能。
+
+原版 1.10 已在 GDI 战役中完成实机验证。当前 C&C3 EXE SHA-256：`BFAB88B51B57DB15888620C2FD837D2A7C222DE2962B59ABFF6FEACA8A11C6ED`。
+
 ## 构建
 
-两个目录均包含独立的 `build.ps1`、依赖清单和第三方许可说明。使用 Python 3.12，在仓库根目录运行：
+三个目录均包含独立的 `build.ps1`。红警2与红警3构建使用 Python 3.12；C&C3 修改器使用 Windows 自带的 .NET Framework C# 编译器。在仓库根目录运行：
 
 ```powershell
 .\build-all.ps1
