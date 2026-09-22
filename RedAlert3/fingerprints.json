@@ -1,0 +1,14 @@
+[
+  {
+    "Name": "ra3_1.13.game",
+    "SHA256": "E4016847423869B3D4E6A5AE4C74228F2083C65E34416104635602C5526B3EEE",
+    "Machine": "0x014C",
+    "ImageBase": "0x00400000"
+  },
+  {
+    "Name": "ra3ep1_1.1.game",
+    "SHA256": "B1DA83EFD229570BAB9DE3A14E48B2D1E6128E302BD52384858FA8A413AE330B",
+    "Machine": "0x014C",
+    "ImageBase": "0x00400000"
+  }
+]

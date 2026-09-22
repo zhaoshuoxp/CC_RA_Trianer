@@ -1,5 +1,9 @@
-.venv/
-__pycache__/
-build/
-dist/
-*.spec
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/.build-venv/
+**/build/
+**/*.spec
+RedAlert2/dist/
+RedAlert3/dist/*
+!RedAlert3/dist/RA3Trainer-Portable.exe
