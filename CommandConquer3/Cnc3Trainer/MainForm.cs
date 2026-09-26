@@ -77,7 +77,7 @@ namespace Cnc3Trainer
             Panel featureCard = MakeCard(new Rectangle(24, 400, 512, 150)); Controls.Add(featureCard);
             power = MakeToggle("无限电力", "Num 2", new Point(18, 16));
             god = MakeToggle("我方无敌", "Num 3", new Point(260, 16));
-            scenario = MakeToggle("保护剧情初始单位", "Num 4", new Point(18, 60));
+            scenario = MakeToggle("保护剧情增援单位", "Num 4", new Point(18, 60));
             shield = MakeToggle("护盾不减", "Num 5", new Point(260, 60));
             quick = MakeToggle("快速生产", "Num 6", new Point(18, 104));
             global = MakeToggle("全球征服资金", "Num 7", new Point(260, 104));

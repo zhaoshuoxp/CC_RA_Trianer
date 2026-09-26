@@ -35,6 +35,7 @@ namespace Cnc3Trainer
         GameProfile profile;
         int remote;
         int lastPlayer;
+        int playerManagerGlobal;
         readonly List<Patch> patches = new List<Patch>();
 
         bool minimumMoney;
@@ -69,6 +70,10 @@ namespace Cnc3Trainer
 
                 byte[] module = opened.ReadModule();
                 int playerSite = opened.FindUnique(module, selected.PlayerPattern, "玩家资源");
+                byte[] managerInstruction = opened.Read(playerSite - 0x23, 2);
+                if (managerInstruction[0] != 0x8B || managerInstruction[1] != 0x0D)
+                    throw new InvalidOperationException("玩家管理器入口不匹配，已拒绝连接。");
+                int managerGlobal = opened.ReadInt32(playerSite - 0x21);
                 int damageSite = opened.FindUnique(module, selected.DamagePattern, "伤害处理");
                 int unitSite = opened.FindUnique(module, selected.UnitPattern, "单位归属");
                 int shieldSite = opened.FindUnique(module, selected.ShieldPattern, "护盾处理");
@@ -79,9 +84,9 @@ namespace Cnc3Trainer
                 if (selected.Kind == GameKind.KanesWrath)
                     globalSite = opened.FindUnique(module, selected.GlobalPattern, "全球征服资金");
 
-                memory = opened; opened = null; profile = selected;
+                memory = opened; opened = null; profile = selected; playerManagerGlobal = managerGlobal;
                 remote = memory.Allocate(0x1000);
-                memory.WriteFloat(remote + VAR_MINPROG, 90.0f);
+                memory.WriteFloat(remote + VAR_MINPROG, 100.0f);
 
                 InstallPlayerHook(playerSite, remote + 0x100);
                 InstallGodHook(damageSite, remote + 0x200);
@@ -145,15 +150,21 @@ namespace Cnc3Trainer
             b.Emit(0x50, 0x53, 0x52);                                    // push eax,ebx,edx
             b.Emit(0x8B, 0x1D); b.EmitInt32(remote + VAR_NAME);
             b.Emit(0x8B, 0x96); b.EmitInt32(profile.UnitNameOffset);
-            b.Emit(0xB9); b.EmitInt32(12);
+            b.Emit(0x85, 0xDB); b.Jcc(0x84, "nameFailed");              // null player name
+            b.Emit(0x85, 0xD2); b.Jcc(0x84, "nameFailed");              // null owner name
+            b.Emit(0xB9); b.EmitInt32(32);
             b.Label("nameLoop");
-            b.Emit(0x0F, 0xB6, 0x03, 0x85, 0xC0); b.Jcc(0x84, "nameDone");
-            b.Emit(0x3A, 0x02); b.Jcc(0x85, "nameDone");
+            b.Emit(0x8A, 0x03);                                          // mov al,[ebx]
+            b.Emit(0x3A, 0x02); b.Jcc(0x85, "nameFailed");
+            b.Emit(0x84, 0xC0); b.Jcc(0x84, "nameMatched");             // both reached NUL
             b.Emit(0x43, 0x42, 0x49);                                    // inc ebx; inc edx; dec ecx
             b.Jcc(0x85, "nameLoop");
-            b.Label("nameDone");
-            b.Emit(0x85, 0xC9, 0x5A, 0x5B, 0x58);                        // test ecx; pop edx,ebx,eax
-            b.Jcc(0x85, "exit");
+            b.Label("nameMatched");
+            b.Emit(0x5A, 0x5B, 0x58);                                    // pop edx,ebx,eax
+            b.Jmp("owned");
+            b.Label("nameFailed");
+            b.Emit(0x5A, 0x5B, 0x58);                                    // pop edx,ebx,eax
+            b.Jmp("exit");
             b.Label("owned");
             EmitMovEcxEsi(b, profile.UnitMarkerOffset);
             b.Emit(0x85, 0xC9); b.Jcc(0x84, "exit");
@@ -237,7 +248,20 @@ namespace Cnc3Trainer
             if (!IsConnected) return result;
             if (memory.Process.HasExited) { Disconnect(); return result; }
             int player = memory.ReadInt32(remote + VAR_PLAYER);
-            if (player < 0x10000 || player > 0x7FFF0000) return result;
+            int common, name;
+            int directPlayer;
+            if (TryReadActivePlayer(out directPlayer, out common, out name))
+            {
+                player = directPlayer;
+                if (memory.ReadInt32(remote + VAR_PLAYER) != player) memory.WriteInt32(remote + VAR_PLAYER, player);
+                if (memory.ReadInt32(remote + VAR_COMMON) != common) memory.WriteInt32(remote + VAR_COMMON, common);
+                if (memory.ReadInt32(remote + VAR_NAME) != name) memory.WriteInt32(remote + VAR_NAME, name);
+            }
+            if (!IsPointer(player))
+            {
+                if (lastPlayer != 0) { DisableAll(); lastPlayer = 0; result.SessionChanged = true; }
+                return result;
+            }
             if (lastPlayer != 0 && player != lastPlayer)
             {
                 DisableAll();
@@ -267,9 +291,35 @@ namespace Cnc3Trainer
             return result;
         }
 
+        bool TryReadActivePlayer(out int player, out int common, out int name)
+        {
+            player = common = name = 0;
+            try
+            {
+                int manager = memory.ReadInt32(playerManagerGlobal);
+                if (!IsPointer(manager)) return false;
+                int primary = memory.ReadInt32(manager + 0x1C);
+                if (!IsPointer(primary)) return true;
+                byte[] firstFlag = memory.Read(primary + profile.PlayerFlagOneOffset, 1);
+                byte[] secondFlag = memory.Read(primary + profile.PlayerFlagTwoOffset, 1);
+                int candidate = firstFlag[0] == 0 && secondFlag[0] == 0
+                    ? primary : memory.ReadInt32(manager + profile.PlayerAlternateOffset);
+                if (!IsPointer(candidate)) return true;
+                int resource = memory.ReadInt32(candidate + 0x60);
+                int candidateCommon = memory.ReadInt32(candidate + 0xE8);
+                int candidateName = memory.ReadInt32(candidate + 0x40);
+                if (!IsPointer(resource) || !IsPointer(candidateCommon) || !IsPointer(candidateName)) return true;
+                player = candidate; common = candidateCommon; name = candidateName;
+                return true;
+            }
+            catch { return false; }
+        }
+
+        static bool IsPointer(int value) { return value > 0x10000 && value < 0x7FFF0000; }
+
         internal void SetMoney(int amount)
         {
-            if (lastPlayer == 0) throw new InvalidOperationException("尚未读取到玩家数据，请先进入并短暂恢复游戏。");
+            if (lastPlayer == 0) throw new InvalidOperationException("尚未读取到玩家数据，请先进入单人地图并连接游戏。");
             int resource = memory.ReadInt32(lastPlayer + 0x60);
             int stored = memory.ReadInt32(resource + 0x10);
             memory.WriteInt32(resource + 0x04, amount - stored);
@@ -278,7 +328,7 @@ namespace Cnc3Trainer
         internal void AddMoney(int amount)
         {
             TickResult tick = Tick();
-            if (!tick.PlayerReady) throw new InvalidOperationException("尚未读取到玩家数据，请先进入并短暂恢复游戏。");
+            if (!tick.PlayerReady) throw new InvalidOperationException("尚未读取到玩家数据，请先进入单人地图并连接游戏。");
             long target = (long)tick.Money + amount;
             SetMoney((int)Math.Min(int.MaxValue, Math.Max(0, target)));
         }
@@ -334,7 +384,7 @@ namespace Cnc3Trainer
             }
             finally
             {
-                patches.Clear(); remote = 0; lastPlayer = 0; profile = null; memory = null; current.Dispose();
+                patches.Clear(); remote = 0; lastPlayer = 0; playerManagerGlobal = 0; profile = null; memory = null; current.Dispose();
             }
         }
 

@@ -15,6 +15,9 @@ namespace Cnc3Trainer
         internal int UnitNameOffset;
         internal int UnitMarkerOffset;
         internal int ShieldMaxOffset;
+        internal int PlayerAlternateOffset;
+        internal int PlayerFlagOneOffset;
+        internal int PlayerFlagTwoOffset;
         internal string PlayerPattern;
         internal string DamagePattern;
         internal string UnitPattern;
@@ -54,6 +57,9 @@ namespace Cnc3Trainer
                 UnitNameOffset = 0x340,
                 UnitMarkerOffset = 0x438,
                 ShieldMaxOffset = 0x6C,
+                PlayerAlternateOffset = 0x74,
+                PlayerFlagOneOffset = 0x13A,
+                PlayerFlagTwoOffset = 0x20C,
                 PlayerPattern = "8B 47 60 8B 48 10 03 48 04 8B 16 51 8B CE FF 52 0C 6A 01 ?? ??",
                 DamagePattern = "F3 0F 10 5D 08 0F 57 C9 56 8B F1 F3 0F 10 46 08 F3 0F 10 56 10",
                 UnitPattern = "8B 8E C0 02 00 00 85 C9 ?? ?? 8B 01 57 FF 10 F6 86 CD 03 00 00 01",
@@ -76,6 +82,9 @@ namespace Cnc3Trainer
                 UnitNameOffset = 0x34C,
                 UnitMarkerOffset = 0x444,
                 ShieldMaxOffset = 0x7C,
+                PlayerAlternateOffset = 0x8C,
+                PlayerFlagOneOffset = 0x146,
+                PlayerFlagTwoOffset = 0x238,
                 PlayerPattern = "8B 47 60 8B 48 10 03 48 04 8B 16 51 8B CE FF 52 0C 6A 01 ?? ??",
                 DamagePattern = "F3 0F 10 5D 08 0F 57 C9 56 8B F1 F3 0F 10 46 08 F3 0F 10 56 10",
                 UnitPattern = "8B 8E CC 02 00 00 85 C9 ?? ?? 8B 01 57 FF 10 F6 86 D9 03 00 00 01",
